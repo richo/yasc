@@ -76,6 +76,30 @@ showVal (DottedList head tail) = "(" ++ unwordsList head ++ " . " ++ showVal tai
 showVal (Func {params = args, body = body}) =
     "(lambda (" ++ unwords (map show args) ++ ") ... )"
 
+emitVal :: LispVal -> String
+emitVal (String contents)      = "\"" ++ contents ++ "\""
+emitVal (Atom name)            = name
+emitVal (Number contents)      = show contents
+emitVal (Bool True)            = "#t"
+emitVal (Bool False)           = "#f"
+emitVal (List contents)        = "(" ++ unwordsList contents ++ ")"
+emitVal (DottedList head tail) = "(" ++ unwordsList head ++ " . " ++ showVal tail ++ ")"
+emitVal (Func {params = args, body = body}) =
+    "() {\n" ++
+        unwords (map show body)
+        ++ "}"
+
+makeFunc params body = Func (map showVal params) body
+makeNormalFunc = makeFunc
+
+eval :: LispVal -> LispVal
+eval val@(String _)             = val
+eval val@(Number _)             = val
+eval val@(Bool _)               = val
+eval (List [Atom "quote", val]) = val
+eval (List (Atom "lambda" : List params : body)) =
+    makeNormalFunc params body
+
 
 primitives :: [(String, [LispVal] -> LispVal)]
 primitives = [("+", numericBinop (+)),
@@ -135,5 +159,5 @@ readExpr input = case parse parseExpr "scheme" input of
 main :: IO ()
 main = do
     line <- getLine
-    print (showVal $ readExpr line)
+    print (emitVal $ eval (readExpr line))
     main
