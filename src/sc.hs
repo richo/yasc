@@ -2,6 +2,7 @@ module Main where
 import Text.ParserCombinators.Parsec hiding (spaces)
 import System.Environment
 import Control.Monad
+import Data.IORef
 
 symbol :: Parser Char
 symbol = oneOf "!#$%^|*+-/:<=>?@^_~"
@@ -16,6 +17,9 @@ data LispVal = Atom String
              | String String
              | Bool Bool
              | Func {params :: [String], body :: [LispVal]} --, closure :: Env}
+type Env = IORef [(String, IORef LispVal)]
+nullEnv :: IO Env
+nullEnv = newIORef []
 
 parseString :: Parser LispVal
 parseString = do char '"' -- Read until we find this char
@@ -92,12 +96,12 @@ emitVal (Func {params = args, body = body}) =
 makeFunc params body = Func (map showVal params) body
 makeNormalFunc = makeFunc
 
-eval :: LispVal -> LispVal
-eval val@(String _)             = val
-eval val@(Number _)             = val
-eval val@(Bool _)               = val
-eval (List [Atom "quote", val]) = val
-eval (List (Atom "lambda" : List params : body)) =
+eval :: Env -> LispVal -> LispVal
+eval env val@(String _)             = val
+eval env val@(Number _)             = val
+eval env val@(Bool _)               = val
+eval env (List [Atom "quote", val]) = val
+eval env (List (Atom "lambda" : List params : body)) =
     makeNormalFunc params body
 
 
@@ -159,5 +163,6 @@ readExpr input = case parse parseExpr "scheme" input of
 main :: IO ()
 main = do
     line <- getLine
-    print (emitVal $ eval (readExpr line))
+    env <- nullEnv
+    print (emitVal $ eval env (readExpr line))
     main
