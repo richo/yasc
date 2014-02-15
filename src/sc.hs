@@ -87,6 +87,7 @@ defineVar envRef var value = do
 
 
 showVal :: LispVal -> String
+showVal Nil                    = "'nil"
 showVal (String contents)      = "\"" ++ contents ++ "\""
 showVal (Atom name)            = name
 showVal (Number contents)      = show contents
