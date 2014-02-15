@@ -2,6 +2,7 @@ module Main where
 import Text.ParserCombinators.Parsec hiding (spaces)
 import System.Environment
 import Control.Monad
+import Control.Monad.Error
 import Data.IORef
 
 symbol :: Parser Char
@@ -16,6 +17,7 @@ data LispVal = Atom String
              | Number Integer
              | String String
              | Bool Bool
+             | Nil
              | Func {params :: [String], body :: [LispVal]} --, closure :: Env}
 type Env = IORef [(String, IORef LispVal)]
 nullEnv :: IO Env
@@ -69,6 +71,21 @@ parseQuoted = do
 unwordsList :: [LispVal] -> String
 unwordsList = unwords . map showVal
 
+isBound :: Env -> String -> IO Bool
+isBound envRef var = readIORef envRef >>= return . maybe False (const True) . lookup var
+
+defineVar :: Env -> String -> LispVal -> IO LispVal
+defineVar envRef var value = do
+    alreadyDefined <- liftIO $ isBound envRef var
+    if alreadyDefined
+        then return Nil
+        else liftIO $ do
+            valueRef <- newIORef value
+            env <- readIORef envRef
+            writeIORef envRef ((var, valueRef) : env)
+            return value
+
+
 showVal :: LispVal -> String
 showVal (String contents)      = "\"" ++ contents ++ "\""
 showVal (Atom name)            = name
@@ -96,13 +113,16 @@ emitVal (Func {params = args, body = body}) =
 makeFunc params body = Func (map showVal params) body
 makeNormalFunc = makeFunc
 
-eval :: Env -> LispVal -> LispVal
-eval env val@(String _)             = val
-eval env val@(Number _)             = val
-eval env val@(Bool _)               = val
-eval env (List [Atom "quote", val]) = val
+eval :: Env -> LispVal -> IO LispVal
+eval env val@(String _)             = return val
+eval env val@(Number _)             = return val
+eval env val@(Bool _)               = return val
+eval env (List [Atom "define", Atom var, form]) = do
+    val <- defineVar env var form
+    return val
+eval env (List [Atom "quote", val]) = return val
 eval env (List (Atom "lambda" : List params : body)) =
-    makeNormalFunc params body
+    return $ makeNormalFunc params body
 
 
 primitives :: [(String, [LispVal] -> LispVal)]
@@ -164,5 +184,6 @@ main :: IO ()
 main = do
     line <- getLine
     env <- nullEnv
-    print (emitVal $ eval env (readExpr line))
+    val <- eval env (readExpr line)
+    print (emitVal val)
     main
