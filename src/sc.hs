@@ -97,19 +97,6 @@ showVal (DottedList head tail) = "(" ++ unwordsList head ++ " . " ++ showVal tai
 showVal (Func {params = args, body = body}) =
     "(lambda (" ++ unwords (map show args) ++ ") ... )"
 
-emitVal :: LispVal -> String
-emitVal (String contents)      = "\"" ++ contents ++ "\""
-emitVal (Atom name)            = name
-emitVal (Number contents)      = show contents
-emitVal (Bool True)            = "#t"
-emitVal (Bool False)           = "#f"
-emitVal (List contents)        = "(" ++ unwordsList contents ++ ")"
-emitVal (DottedList head tail) = "(" ++ unwordsList head ++ " . " ++ showVal tail ++ ")"
-emitVal (Func {params = args, body = body}) =
-    "() {\n" ++
-        unwords (map show body)
-        ++ "}"
-
 makeFunc params body = Func (map showVal params) body
 makeNormalFunc = makeFunc
 
@@ -185,5 +172,5 @@ main = do
     line <- getLine
     env <- nullEnv
     val <- eval env (readExpr line)
-    print (emitVal val)
+    print (showVal val)
     main
