@@ -74,6 +74,12 @@ unwordsList = unwords . map showVal
 isBound :: Env -> String -> IO Bool
 isBound envRef var = readIORef envRef >>= return . maybe False (const True) . lookup var
 
+getVar :: Env -> String -> IO LispVal
+getVar envRef var = do env <- liftIO $ readIORef envRef
+                       maybe (return Nil)
+                             (liftIO . readIORef)
+                             (lookup var env)
+
 defineVar :: Env -> String -> LispVal -> IO LispVal
 defineVar envRef var value = do
     alreadyDefined <- liftIO $ isBound envRef var
@@ -102,6 +108,7 @@ makeFunc params body = Func (map showVal params) body
 makeNormalFunc = makeFunc
 
 eval :: Env -> LispVal -> IO LispVal
+eval env (Atom id)                  = getVar env id
 eval env val@(String _)             = return val
 eval env val@(Number _)             = return val
 eval env val@(Bool _)               = return val
