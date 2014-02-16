@@ -72,6 +72,9 @@ parseQuoted = do
               x <- parseExpr
               return $ List [Atom "quote", x]
 
+load :: String -> IO [LispVal]
+load filename = (liftIO $ readFile filename) >>= readExprList
+
 unwordsList :: [LispVal] -> String
 unwordsList = unwords . map showVal
 
@@ -146,6 +149,8 @@ topLevelEval env (List [Atom "define", Atom var, form]) = do
     ret <- eval env form
     val <- defineVar env var ret
     return val
+topLevelEval env (List [Atom "load", String filename]) =
+    load filename >>= liftM last . mapM (topLevelEval env)
 -- TODO Remove, just for debugging
 topLevelEval env (Atom id)                  = getVar env id
 
@@ -214,6 +219,12 @@ readExpr :: String -> LispVal
 readExpr input = case parse parseExpr "scheme" input of
     Left err -> String $ "No match: " ++ show err
     Right val -> val
+
+readExprList :: String -> IO [LispVal]
+readExprList input = case parse (endBy parseExpr spaces) "scheme" input of
+    Left err  -> do
+        return [Nil] -- Again, stop dumping nils everywhere
+    Right val -> return val
 
 mainloop :: Env -> IO ()
 mainloop env = do
