@@ -113,7 +113,8 @@ topLevelEval :: Env -> LispVal -> IO LispVal
 topLevelEval env (List (Atom "intrinsic!" : Atom name: List params : body)) =
     defineVar env name $ makeIntrinsic params body
 topLevelEval env (List [Atom "define", Atom var, form]) = do
-    val <- defineVar env var form
+    ret <- eval env form
+    val <- defineVar env var ret
     return val
 
 eval :: Env -> LispVal -> IO LispVal
