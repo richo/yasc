@@ -165,54 +165,6 @@ eval env (List [Atom "quote", val]) = return val
 eval env (List (Atom "lambda" : List params : body)) =
     return $ makeNormalFunc params body
 
-
-primitives :: [(String, [LispVal] -> LispVal)]
-primitives = [("+", numericBinop (+)),
-              ("-", numericBinop (-)),
-              ("*", numericBinop (*)),
-              ("/", numericBinop div),
-              ("mod", numericBinop mod),
-              ("quotient", numericBinop quot),
-              ("remainder", numericBinop rem),
-              ("symbol?", typePredicate isAtom),
-              ("symbol->string", atomToString),
-              ("string->symbol", stringToAtom),
-              ("string?", typePredicate isString),
-              ("number?", typePredicate isNumber)]
-
-typePredicate :: (LispVal -> Bool) -> [LispVal] -> LispVal
-typePredicate predicate params = Bool $ predicate $ head params
-
-isNumber :: LispVal -> Bool
-isNumber (Number _) = True
-isNumber _          = False
-
-isAtom :: LispVal -> Bool
-isAtom (Atom _) = True
-isAtom _        = False
-
-isString :: LispVal -> Bool
-isString (String _) = True
-isString _          = False
-
-atomToString :: [LispVal] -> LispVal
-atomToString params = case head params of
-                    (Atom n) -> String n
-                    _        -> Bool False
-
-stringToAtom :: [LispVal] -> LispVal
-stringToAtom params = case head params of
-                    (String n) -> Atom n
-                    _          -> Bool False
-
-
-numericBinop :: (Integer -> Integer -> Integer) -> [LispVal] -> LispVal
-numericBinop op params = Number $ foldl1 op $ map unpackNum params
-
-unpackNum :: LispVal -> Integer
-unpackNum (Number n) = n
-unpackNum _ = 0
-
 instance Show LispVal where show = showVal
 
 
