@@ -1,5 +1,6 @@
 module Main where
 import Text.ParserCombinators.Parsec hiding (spaces)
+import System.IO
 import System.Environment
 import Control.Monad
 import Control.Monad.Error
@@ -226,15 +227,31 @@ readExprList input = case parse (endBy parseExpr spaces) "scheme" input of
         return [Nil] -- Again, stop dumping nils everywhere
     Right val -> return val
 
-mainloop :: Env -> IO ()
-mainloop env = do
+until_ :: Monad m => (a -> Bool) -> m a -> (a -> m ()) -> m ()
+until_ pred prompt action = do
+  result <- prompt
+  if pred result
+     then return ()
+     else action result >> until_ pred prompt action
+
+runOne :: [String] -> Env -> IO ()
+runOne args env = do
+    (liftM show $ topLevelEval env (List [Atom "load", String (args !! 0)]))
+         >>= putStrLn
+
+runRepl :: Env -> IO ()
+runRepl env = do
+    putStr "yasc> "
+    hFlush stdout
+
     line <- getLine
     val <- topLevelEval env (readExpr line)
     print (showVal val)
-    mainloop env
+    runRepl env
 
 main :: IO ()
 main = do
     env <- nullEnv
     defineVar env "exports" $ List []
-    mainloop env
+    args <- getArgs
+    if null args then runRepl env else runOne args env
