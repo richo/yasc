@@ -111,7 +111,7 @@ makeIntrinsic params body = Intrinsic (map showVal params) body
 
 topLevelEval :: Env -> LispVal -> IO LispVal
 topLevelEval env (List (Atom "intrinsic!" : Atom name: List params : body)) =
-    return $ makeIntrinsic params body
+    defineVar env name $ makeIntrinsic params body
 
 eval :: Env -> LispVal -> IO LispVal
 eval env (Atom id)                  = getVar env id
