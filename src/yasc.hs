@@ -104,6 +104,8 @@ showVal (List contents)        = "(" ++ unwordsList contents ++ ")"
 showVal (DottedList head tail) = "(" ++ unwordsList head ++ " . " ++ showVal tail ++ ")"
 showVal (Func {params = args, body = body}) =
     "(lambda (" ++ unwords (map show args) ++ ") ... )"
+showVal (Intrinsic {params = args, body = body}) =
+    "(intrinsic (" ++ unwords (map show args) ++ ") ... )"
 
 makeFunc params body = Func (map showVal params) body
 makeNormalFunc = makeFunc
