@@ -112,15 +112,15 @@ makeIntrinsic params body = Intrinsic (map showVal params) body
 topLevelEval :: Env -> LispVal -> IO LispVal
 topLevelEval env (List (Atom "intrinsic!" : Atom name: List params : body)) =
     defineVar env name $ makeIntrinsic params body
+topLevelEval env (List [Atom "define", Atom var, form]) = do
+    val <- defineVar env var form
+    return val
 
 eval :: Env -> LispVal -> IO LispVal
 eval env (Atom id)                  = getVar env id
 eval env val@(String _)             = return val
 eval env val@(Number _)             = return val
 eval env val@(Bool _)               = return val
-eval env (List [Atom "define", Atom var, form]) = do
-    val <- defineVar env var form
-    return val
 eval env (List [Atom "quote", val]) = return val
 eval env (List (Atom "lambda" : List params : body)) =
     return $ makeNormalFunc params body
