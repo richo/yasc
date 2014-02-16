@@ -234,10 +234,20 @@ until_ pred prompt action = do
      then return ()
      else action result >> until_ pred prompt action
 
+emitAll :: Env -> LispVal -> IO [()]
+emitAll env (List names) = mapM (emit env) names
+
+emit :: Env -> LispVal -> IO ()
+emit env (String name) = do
+    val <- getVar env name
+    print $ show val
+
 runOne :: [String] -> Env -> IO ()
 runOne args env = do
     (liftM show $ topLevelEval env (List [Atom "load", String (args !! 0)]))
-         >>= putStrLn
+    exports <- (getVar env "exports")
+    emitAll env exports
+    hFlush stdout
 
 runRepl :: Env -> IO ()
 runRepl env = do
