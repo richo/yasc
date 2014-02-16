@@ -185,7 +185,7 @@ readExpr input = case parse parseExpr "scheme" input of
 mainloop :: Env -> IO ()
 mainloop env = do
     line <- getLine
-    val <- eval env (readExpr line)
+    val <- topLevelEval env (readExpr line)
     print (showVal val)
     mainloop env
 
