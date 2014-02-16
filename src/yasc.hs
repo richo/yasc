@@ -4,6 +4,7 @@ import System.Environment
 import Control.Monad
 import Control.Monad.Error
 import Data.IORef
+import qualified Data.Map as M
 
 symbol :: Parser Char
 symbol = oneOf "!#$%^|*+-/:<=>?@^_~"
@@ -20,9 +21,11 @@ data LispVal = Atom String
              | Nil
              | Func {params :: [String], body :: [LispVal]} --, closure :: Env}
              | Intrinsic {params :: [String], body :: [LispVal]}
-type Env = IORef [(String, IORef LispVal)]
+type InnerEnv = M.Map String (IORef LispVal)
+type Env = IORef InnerEnv
+
 nullEnv :: IO Env
-nullEnv = newIORef []
+nullEnv = newIORef M.empty
 
 parseString :: Parser LispVal
 parseString = do char '"' -- Read until we find this char
@@ -73,13 +76,17 @@ unwordsList :: [LispVal] -> String
 unwordsList = unwords . map showVal
 
 isBound :: Env -> String -> IO Bool
-isBound envRef var = readIORef envRef >>= return . maybe False (const True) . lookup var
+isBound envRef var = do
+    env <- readIORef envRef
+    case M.lookup var env of
+        Just _   -> return True
+        Nothing  -> return False
 
 getVar :: Env -> String -> IO LispVal
 getVar envRef var = do env <- liftIO $ readIORef envRef
                        maybe (return Nil)
                              (liftIO . readIORef)
-                             (lookup var env)
+                             (M.lookup var env)
 
 defineVar :: Env -> String -> LispVal -> IO LispVal
 defineVar envRef var value = do
@@ -89,7 +96,7 @@ defineVar envRef var value = do
         else liftIO $ do
             valueRef <- newIORef value
             env <- readIORef envRef
-            writeIORef envRef ((var, valueRef) : env)
+            writeIORef envRef (M.insert var valueRef env)
             return value
 
 
