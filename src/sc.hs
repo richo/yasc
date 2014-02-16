@@ -175,10 +175,14 @@ readExpr input = case parse parseExpr "scheme" input of
     Left err -> String $ "No match: " ++ show err
     Right val -> val
 
-main :: IO ()
-main = do
+mainloop :: Env -> IO ()
+mainloop env = do
     line <- getLine
-    env <- nullEnv
     val <- eval env (readExpr line)
     print (showVal val)
-    main
+    mainloop env
+
+main :: IO ()
+main = do
+    env <- nullEnv
+    mainloop env
