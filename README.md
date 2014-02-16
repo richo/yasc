@@ -1,5 +1,5 @@
-SC
-==
+YASC
+====
 
 A lisp-to-posix-shell compiler, based on the scheme runtime from [Write yourself a scheme][1]
 
