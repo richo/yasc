@@ -85,7 +85,7 @@ defineVar :: Env -> String -> LispVal -> IO LispVal
 defineVar envRef var value = do
     alreadyDefined <- liftIO $ isBound envRef var
     if alreadyDefined
-        then return Nil
+        then return Nil -- TODO Barf instead of silently doing nothing
         else liftIO $ do
             valueRef <- newIORef value
             env <- readIORef envRef
