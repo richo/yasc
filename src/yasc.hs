@@ -116,6 +116,9 @@ topLevelEval env (List [Atom "define", Atom var, form]) = do
     ret <- eval env form
     val <- defineVar env var ret
     return val
+-- TODO Remove, just for debugging
+topLevelEval env (Atom id)                  = getVar env id
+
 
 eval :: Env -> LispVal -> IO LispVal
 eval env (Atom id)                  = getVar env id
