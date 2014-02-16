@@ -19,6 +19,7 @@ data LispVal = Atom String
              | Bool Bool
              | Nil
              | Func {params :: [String], body :: [LispVal]} --, closure :: Env}
+             | Intrinsic {params :: [String], body :: [LispVal]}
 type Env = IORef [(String, IORef LispVal)]
 nullEnv :: IO Env
 nullEnv = newIORef []
@@ -106,6 +107,11 @@ showVal (Func {params = args, body = body}) =
 
 makeFunc params body = Func (map showVal params) body
 makeNormalFunc = makeFunc
+makeIntrinsic params body = Intrinsic (map showVal params) body
+
+topLevelEval :: Env -> LispVal -> IO LispVal
+topLevelEval env (List (Atom "intrinsic!" : Atom name: List params : body)) =
+    return $ makeIntrinsic params body
 
 eval :: Env -> LispVal -> IO LispVal
 eval env (Atom id)                  = getVar env id
