@@ -110,6 +110,9 @@ makeNormalFunc = makeFunc
 makeIntrinsic params body = Intrinsic (map showVal params) body
 
 topLevelEval :: Env -> LispVal -> IO LispVal
+-- TODO Consider making this support some of:
+-- (intrinsic! (foo bar) ...)
+-- (intrinsic! (foo bar . rest) ...)
 topLevelEval env (List (Atom "intrinsic!" : Atom name: List params : body)) =
     defineVar env name $ makeIntrinsic params body
 topLevelEval env (List [Atom "define", Atom var, form]) = do
