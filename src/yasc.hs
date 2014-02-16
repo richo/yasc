@@ -200,4 +200,5 @@ mainloop env = do
 main :: IO ()
 main = do
     env <- nullEnv
+    defineVar env "exports" $ List []
     mainloop env
