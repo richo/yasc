@@ -10,10 +10,14 @@ import qualified Data.Map as M
 symbol :: Parser Char
 symbol = oneOf "!#$%^|*+-/:<=>?@^_~"
 
+dollar :: Parser Char
+dollar = char '$'
+
 spaces :: Parser ()
 spaces = skipMany1 space
 
 data LispVal = Atom String
+             | Var String
              | List [LispVal]
              | DottedList [LispVal] LispVal
              | Number Integer
@@ -43,12 +47,18 @@ parseAtom = do first <- letter <|> symbol
                           "#f" -> Bool False
                           _    -> Atom atom -- _ == .* for pattern matching
 
+parseVar :: Parser LispVal
+parseVar = do first <- dollar
+              rest <- many (letter <|> digit)
+              return $ (Var rest) -- : list cons
+
 parseNumber :: Parser LispVal
 parseNumber = do digits <- many1 digit
                  return $ Number (read digits)
 
 parseExpr :: Parser LispVal
-parseExpr = parseAtom
+parseExpr = parseVar
+        <|> parseAtom
         <|> parseString
         <|> parseNumber
         <|> parseQuoted
@@ -115,6 +125,7 @@ showVal :: LispVal -> String
 showVal Nil                    = "'nil"
 showVal (String contents)      = "\"" ++ contents ++ "\""
 showVal (Atom name)            = name
+showVal (Var name)             = "$" ++ name
 showVal (Number contents)      = show contents
 showVal (Bool True)            = "#t"
 showVal (Bool False)           = "#f"
@@ -158,6 +169,7 @@ topLevelEval env (Atom id)                  = getVar env id
 
 eval :: Env -> LispVal -> IO LispVal
 eval env (Atom id)                  = getVar env id
+eval env val@(Var _)                = return val
 eval env val@(String _)             = return val
 eval env val@(Number _)             = return val
 eval env val@(Bool _)               = return val
