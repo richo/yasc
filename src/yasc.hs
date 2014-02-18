@@ -177,6 +177,13 @@ topLevelEval env (List [Atom "load", String filename]) =
 -- TODO Remove, just for debugging
 topLevelEval env (Atom id)                  = getVar env id
 
+evalBody env body = liftM last $ mapM (eval env) body
+
+apply :: Env -> LispVal -> [LispVal] -> IO LispVal
+apply env (Intrinsic {params = params, body = body}) args = do
+    binding <- bindVars env $ zip params args
+    evalBody env body
+
 
 eval :: Env -> LispVal -> IO LispVal
 eval env (Atom id)                  = getVar env id
