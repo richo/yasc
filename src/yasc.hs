@@ -214,8 +214,9 @@ emitAll env (List names) = mapM (emit env) names
 
 emit :: Env -> LispVal -> IO ()
 emit env (String name) = do
-    val <- getVar env name
-    print $ show val
+    val <- getVar env name -- fetch the callable
+    ast <- eval env val -- Turn it into an ast
+    print $ codeGenLambda env name ast
 
 runOne :: [String] -> Env -> IO ()
 runOne args env = do
