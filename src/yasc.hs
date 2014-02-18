@@ -102,6 +102,17 @@ getVar envRef var = do env <- liftIO $ readIORef envRef
                              (liftIO . readIORef)
                              (M.lookup var env)
 
+
+bindVars :: Env -> [(String, LispVal)] -> IO Env
+bindVars envRef bindings = foldM (\env binding -> updateEnv env binding) envRef bindings
+
+-- Like setVar but returns a new, modified environment instead of mutating the old one
+updateEnv :: Env -> (String, LispVal) -> IO Env
+updateEnv envRef (var, value) = do env <- liftIO $ readIORef envRef
+                                   valueRef <- newIORef value
+                                   env <- readIORef envRef
+                                   newIORef (M.insert var valueRef env)
+
 setVar :: Env -> String -> LispVal -> IO LispVal
 setVar envRef var value = do env <- liftIO $ readIORef envRef
                              valueRef <- newIORef value
