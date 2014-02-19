@@ -199,12 +199,12 @@ instance Show LispVal where show = showVal
 
 
 readExpr :: String -> LispVal
-readExpr input = case parse parseExpr "scheme" input of
+readExpr input = case parse parseExpr "yasc" input of
     Left err -> String $ "No match: " ++ show err
     Right val -> val
 
 readExprList :: String -> IO [LispVal]
-readExprList input = case parse (endBy parseExpr spaces) "scheme" input of
+readExprList input = case parse (endBy parseExpr spaces) "yasc" input of
     Left err  -> do
         return [Nil] -- Again, stop dumping nils everywhere
     Right val -> return val
